@@ -16,24 +16,49 @@ import React from 'react';
 
 
 // COMPONENTS:
-class TimerLengthControl extends React.Component {
+class SessionControl extends React.Component {
   render() {
     return (
       <div className="length-control">
-        <div id={this.props.titleID}>
-          {this.props.title}
+        <div id="session-label">
+          Session Length
         </div>
-        <button id={this.props.minID}
+        <button id="session-decrement"
           className="btn-level" value="-" 
-          onClick={this.props.onClick}>
+          onClick={this.props.onDec}>
           <i className="fa fa-arrow-down fa-2x"/>
         </button>
-        <div id={this.props.lengthID} className="btn-level">
+        <div id="session-length" className="btn-level">
           {this.props.length}
         </div>
-        <button id={this.props.addID}
+        <button id="session-increment"
           className="btn-level" value="+" 
-          onClick={this.props.onClick}>
+          onClick={this.props.onInc}>
+          <i className="fa fa-arrow-up fa-2x"/>
+        </button>
+      </div>
+    )
+  }
+};
+
+class BreakControl extends React.Component {
+  render() {
+    return (
+      <div className="length-control">
+        <div id="break-label">
+          Break Length
+        </div>
+        <button id="break-decrement"
+          className="btn-level" value="-" 
+          onClick={this.props.onDec}>
+          <i className="fa fa-arrow-down fa-2x"/>
+        </button>
+        <div id="break-length" className="btn-level">
+          {this.props.length}
+        </div>
+        <button id="break-increment"
+          className="btn-level" value="+" 
+          onClick={this.props.onInc}>
           <i className="fa fa-arrow-up fa-2x"/>
         </button>
       </div>
@@ -50,7 +75,8 @@ class App extends React.Component {
       clockTimer: 1500, // This is the main clock's time (in seconds) and counts down
       clockType: 'session', // Changing this between 'session' and 'break' resets clockTimer to either sessionTimer or breakTimer
       clockState: 'stopped', // If 'stopped', nothing happens; if 'running' clockTimer will decrement every second (WATCH ME FOR WHEN startStop() CHANGES ME!)
-      alarmColor: {color: 'white'}  // White normally, will be red when counter gets low
+      alarmColor: {color: 'white'}, // White normally, will be red when counter gets low
+      intervalID: null
     }
     this.decrementSessionTimer = this.decrementSessionTimer.bind(this);
     this.incrementSessionTimer = this.incrementSessionTimer.bind(this);
@@ -66,86 +92,84 @@ class App extends React.Component {
   // This is called whenever a user manually increments/decrements a timer; it updates the main clock to show the new values
   updateClock() {
     if (this.state.clockType === 'session') {
-      this.setState({
-        clockTimer: this.state.sessionTimer * 60
-      });
+      this.setState((state) => ({
+        clockTimer: state.sessionTimer * 60
+      }));
     } else if (this.state.clockType === 'break') {
-      this.setState({
-        clockTimer: this.state.breakTimer * 60
-      });
+      this.setState((state) => ({
+        clockTimer: state.breakTimer * 60
+      }));
     }
   }
 
   // When user hits the decrement button on the session timer, it decrements it by 1 minute
   decrementSessionTimer() {
-    let currSessTimer = this.state.sessionTimer;
-    this.setState({
-      sessionTimer: currSessTimer--
-    });
+    this.setState((state) => ({
+      sessionTimer: state.sessionTimer - 1
+    }));
     this.updateClock();
   }
 
   // When user hits the increment button on the session timer, it increments it by 1 minute
   incrementSessionTimer() {
-    let currSessTimer = this.state.sessionTimer;
-    this.setState({
-      sessionTimer: currSessTimer++
-    });
+    this.setState((state) => ({
+      sessionTimer: state.sessionTimer + 1
+    }));
     this.updateClock();
   }
 
   // When user hits the decrement button on the break timer, it decrements it by 1 minute
   decrementBreakTimer() {
-    let currBreakTimer = this.state.breakTimer;
-    this.setState({
-      breakTimer: currBreakTimer--
-    });
+    this.setState((state) => ({
+      breakTimer: state.breakTimer - 1
+    }));
     this.updateClock();
   }
 
   // When user hits the increment button on the break timer, it increments it by 1 minute
   incrementBreakTimer() {
-    let currBreakTimer = this.state.breakTimer;
-    this.setState({
-      breakTimer: currBreakTimer++
-    });
+    this.setState((state) => ({
+      breakTimer: state.breakTimer + 1
+    }));
     this.updateClock();
   }
 
   // Decrements the main clock; call me every second!
   decrementClockTimer() {
-    let currClockTimer = this.state.clockTimer;
-    this.setState({
-      clockTimer: currClockTimer++
-    });
+    this.setState((state) => ({
+      clockTimer: state.clockTimer - 1
+    }));
   }
 
   // Resets the clock to the time of whatever type of clock is currently displayed in the main clock
   resetClockTimer() {
     if (this.state.clockType === 'session') {
       this.setState({
-        clockTimer: this.state.sessionTimer
+        clockTimer: this.state.sessionTimer * 60
       });
     } else if (this.state.clockType === 'break'){
       this.setState({
-        clockTimer: this.state.breakTimer
+        clockTimer: this.state.breakTimer * 60
       });
     }
     // Stops the clock on reset
     this.setState({
-      clockState: 'stopped'
+      clockState: 'stopped',
+      intervalID: window.clearInterval(this.state.intervalID)
     });
   }
 
   // Toggles clockState between 'stopped' and 'running'
   startStop() {
-    if (this.state.clockState === 'stopped') {
+    if (this.state.clockState === 'running') {
       this.setState({
-        clockState: 'running'
+        clockState: 'stopped',
+        intervalID: window.clearInterval(this.state.intervalID)
       });
-    } else if (this.state.clockState === 'running') {
+    } else if (this.state.clockState === 'stopped') {
       this.setState({
-        clockState: 'stopped'
+        clockState: 'running',
+        intervalID: window.setInterval(this.decrementClockTimer, 1000)
       });
     }
   }
@@ -166,20 +190,18 @@ class App extends React.Component {
         <div className="main-title">
           Pomodoro Clock
         </div>
-        <TimerLengthControl 
-          titleID="break-label"   minID="break-decrement"
-          addID="break-increment" lengthID="break-length"
-          title="Break Length"    onClick={this.setBrkLength}
-          length={this.state.brkLength}/>
-        <TimerLengthControl 
-          titleID="session-label"   minID="session-decrement"
-          addID="session-increment" lengthID="session-length"
-          title="Session Length"    onClick={this.setSeshLength} 
-          length={this.state.seshLength}/>
+        <SessionControl
+          onInc={this.incrementSessionTimer}
+          onDec={this.decrementSessionTimer}
+          length={this.state.sessionTimer}/>
+        <BreakControl
+          onInc={this.incrementBreakTimer}
+          onDec={this.decrementBreakTimer}
+          length={this.state.breakTimer} />
         <div className="timer" style={this.state.alarmColor}>
           <div className="timer-wrapper">
             <div id='timer-label'>
-              {this.state.timerType}
+              {this.state.clockType}
             </div>
             <div id='time-left'>
               {this.clockTranslater()}
@@ -187,17 +209,17 @@ class App extends React.Component {
           </div>
         </div>
         <div className="timer-control">
-          <button id="start_stop" onClick={this.timerControl}>
+          <button id="start_stop" onClick={this.startStop}>
             <i className="fa fa-play fa-2x"/>
             <i className="fa fa-pause fa-2x"/>
           </button>
-          <button id="reset" onClick={this.reset}>
+          <button id="reset" onClick={this.resetClockTimer}>
             <i className="fa fa-refresh fa-2x"/>
           </button>
         </div>
-        <div className="author"> Designed and Coded by <br />
-          <a target="_blank" href="https://goo.gl/6NNLMG"> 
-            Peter Weinberg
+        <div className="author">Designed and Coded by<br />
+          <a rel="noopener noreferrer" target="_blank" href="https://jh43051.github.io/FCC-portfolio"> 
+            John Holler
           </a>
         </div>
         <audio id="beep" preload="auto" 
