@@ -23,18 +23,18 @@ class SessionControl extends React.Component {
         <div id="session-label">
           Session Length
         </div>
-        <button id="session-decrement"
-          className="btn-level" value="-" 
-          onClick={this.props.onDec}>
-          <i className="fa fa-arrow-down fa-2x"/>
-        </button>
-        <div id="session-length" className="btn-level">
-          {this.props.length}
-        </div>
         <button id="session-increment"
           className="btn-level" value="+" 
           onClick={this.props.onInc}>
           <i className="fa fa-arrow-up fa-2x"/>
+        </button>
+        <div id="session-length" className="btn-level">
+          {this.props.length}
+        </div>
+        <button id="session-decrement"
+          className="btn-level" value="-" 
+          onClick={this.props.onDec}>
+          <i className="fa fa-arrow-down fa-2x"/>
         </button>
       </div>
     )
@@ -48,18 +48,18 @@ class BreakControl extends React.Component {
         <div id="break-label">
           Break Length
         </div>
-        <button id="break-decrement"
-          className="btn-level" value="-" 
-          onClick={this.props.onDec}>
-          <i className="fa fa-arrow-down fa-2x"/>
-        </button>
-        <div id="break-length" className="btn-level">
-          {this.props.length}
-        </div>
         <button id="break-increment"
           className="btn-level" value="+" 
           onClick={this.props.onInc}>
           <i className="fa fa-arrow-up fa-2x"/>
+        </button>
+        <div id="break-length" className="btn-level">
+          {this.props.length}
+        </div>
+        <button id="break-decrement"
+          className="btn-level" value="-" 
+          onClick={this.props.onDec}>
+          <i className="fa fa-arrow-down fa-2x"/>
         </button>
       </div>
     )
@@ -73,10 +73,10 @@ class App extends React.Component {
       sessionTimer: 25, // These only change when user manually adjusts total time
       breakTimer: 5, // These only change when user manually adjusts total time
       clockTimer: 1500, // This is the main clock's time (in seconds) and counts down
-      clockType: 'session', // Changing this between 'session' and 'break' resets clockTimer to either sessionTimer or breakTimer
+      clockType: 'Session', // Changing this between 'session' and 'break' resets clockTimer to either sessionTimer or breakTimer
       clockState: 'stopped', // If 'stopped', nothing happens; if 'running' clockTimer will decrement every second (WATCH ME FOR WHEN startStop() CHANGES ME!)
       alarmColor: {color: 'white'}, // White normally, will be red when counter gets low
-      intervalID: null
+      intervalID: undefined
     }
     this.decrementSessionTimer = this.decrementSessionTimer.bind(this);
     this.incrementSessionTimer = this.incrementSessionTimer.bind(this);
@@ -91,11 +91,11 @@ class App extends React.Component {
 
   // This is called whenever a user manually increments/decrements a timer; it updates the main clock to show the new values
   updateClock() {
-    if (this.state.clockType === 'session') {
+    if (this.state.clockType === 'Session') {
       this.setState((state) => ({
         clockTimer: state.sessionTimer * 60
       }));
-    } else if (this.state.clockType === 'break') {
+    } else if (this.state.clockType === 'Break') {
       this.setState((state) => ({
         clockTimer: state.breakTimer * 60
       }));
@@ -104,34 +104,42 @@ class App extends React.Component {
 
   // When user hits the decrement button on the session timer, it decrements it by 1 minute
   decrementSessionTimer() {
-    this.setState((state) => ({
-      sessionTimer: state.sessionTimer - 1
-    }));
-    this.updateClock();
+    if (this.state.sessionTimer > 1) {
+      this.setState((state) => ({
+        sessionTimer: state.sessionTimer - 1
+      }));
+      this.updateClock();
+    }
   }
 
   // When user hits the increment button on the session timer, it increments it by 1 minute
   incrementSessionTimer() {
-    this.setState((state) => ({
-      sessionTimer: state.sessionTimer + 1
-    }));
-    this.updateClock();
+    if (this.state.sessionTimer < 60) {
+      this.setState((state) => ({
+        sessionTimer: state.sessionTimer + 1
+      }));
+      this.updateClock();
+    }
   }
 
   // When user hits the decrement button on the break timer, it decrements it by 1 minute
   decrementBreakTimer() {
-    this.setState((state) => ({
-      breakTimer: state.breakTimer - 1
-    }));
-    this.updateClock();
+    if (this.state.breakTimer > 1) {
+      this.setState((state) => ({
+        breakTimer: state.breakTimer - 1
+      }));
+      this.updateClock();
+    }
   }
 
   // When user hits the increment button on the break timer, it increments it by 1 minute
   incrementBreakTimer() {
-    this.setState((state) => ({
-      breakTimer: state.breakTimer + 1
-    }));
-    this.updateClock();
+    if (this.state.breakTimer < 60) {
+      this.setState((state) => ({
+        breakTimer: state.breakTimer + 1
+      }));
+      this.updateClock();
+    }
   }
 
   // Decrements the main clock; call me every second!
@@ -141,22 +149,18 @@ class App extends React.Component {
     }));
   }
 
-  // Resets the clock to the time of whatever type of clock is currently displayed in the main clock
+  // Resets the clock to the defaults
   resetClockTimer() {
-    if (this.state.clockType === 'session') {
-      this.setState({
-        clockTimer: this.state.sessionTimer * 60
-      });
-    } else if (this.state.clockType === 'break'){
-      this.setState({
-        clockTimer: this.state.breakTimer * 60
-      });
-    }
-    // Stops the clock on reset
     this.setState({
+      sessionTimer: 25,
+      breakTimer: 5,
+      clockType: 'Session',
       clockState: 'stopped',
-      intervalID: window.clearInterval(this.state.intervalID)
+      clockTimer: 1500,
+      intervalID: window.clearInterval(this.state.intervalID) // Stops the clock on reset
     });
+    this.buzzer.pause(); // Stops buzzer
+    this.buzzer.currentTime = 0; // Rewinds buzzer
   }
 
   // Toggles clockState between 'stopped' and 'running'
@@ -164,12 +168,12 @@ class App extends React.Component {
     if (this.state.clockState === 'running') {
       this.setState({
         clockState: 'stopped',
-        intervalID: window.clearInterval(this.state.intervalID)
+        intervalID: window.clearInterval(this.state.intervalID) // Stops the clock
       });
     } else if (this.state.clockState === 'stopped') {
       this.setState({
         clockState: 'running',
-        intervalID: window.setInterval(this.decrementClockTimer, 1000)
+        intervalID: window.setInterval(this.decrementClockTimer, 1000)  // Starts the clock
       });
     }
   }
@@ -185,6 +189,25 @@ class App extends React.Component {
     
     
   render() {
+    // Catches and toggles timer type between session and break when timer runs out
+    if (this.state.clockTimer === -1 && this.state.clockType === 'Session') {
+      this.setState((state) => ({
+        clockType: 'Break',
+        clockTimer: state.breakTimer * 60
+      }));
+    } else if (this.state.clockTimer === -1 && this.state.clockType === 'Break') {
+      this.setState((state) => ({
+        clockType: 'Session',
+        clockTimer: state.sessionTimer * 60
+      }));
+    }
+
+    // Catches end of timer and triggers buzzer
+    if (this.state.clockTimer === 0) {
+      this.buzzer.play();
+    }
+
+    // JSX returned
     return (
       <div>
         <div className="main-title">
@@ -222,9 +245,8 @@ class App extends React.Component {
             John Holler
           </a>
         </div>
-        <audio id="beep" preload="auto" 
-          src="https://goo.gl/65cBl1"
-          ref={(audio) => { this.audioBeep = audio; }} />
+        <audio id="beep" src="/BeepSound.wav" preload="true" 
+          ref={(audio) => {this.buzzer = audio;}} />
       </div>
     )
   }
