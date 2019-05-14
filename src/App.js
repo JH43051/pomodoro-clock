@@ -142,7 +142,7 @@ class App extends React.Component {
 					onInc={this.incrementBreakTimer}
 					onDec={this.decrementBreakTimer}
 					length={this.state.breakTimer} />
-				<img id="tomato" src="/ODHG1M1.svg" alt="Tomato Top" />
+				<img id="tomato" src="./ODHG1M1.svg" alt="Tomato Top" />
 				<div className="timer">
 					<div className="timer-wrapper">
 						<div id='timer-label'>
@@ -162,7 +162,7 @@ class App extends React.Component {
 						<i class="fas fa-redo-alt fa-2x"></i>
 					</button>
 				</div>
-				<audio id="beep" src="/BeepSound.wav" preload="true"
+				<audio id="beep" src="./BeepSound.wav" preload="true"
 					ref={(audio) => {this.buzzer = audio;}} />
 			</div>
 		)
